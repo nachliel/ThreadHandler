@@ -27,18 +27,19 @@ public class Main {
             System.out.println(Thread.currentThread().getName() + "-Calculated Prime: " + i);
         };
         mySlave.start();
-        mySlave.addTask(task);
-        mySlave.addTask(findPrime);
         mySlave.setTask(task);
-        mySlave.addTask(findPrime);
-        mySlave.addTask(findPrime);
-        mySlave.addTask(findPrime);
+
+        mySlave.setTask(findPrime);
         mySlave.setTask(task);
-        mySlave.addTask(task);
-        mySlave.addTask(task);
+        mySlave.setTask(task);
+        mySlave.setTask(findPrime);
+        mySlave.setTask(findPrime);
+        mySlave.setTask(findPrime);
+        mySlave.setTask(findPrime);
         //while (!mySlave.terminate())
         mySlave.terminate();
         try {mySlave.join();} catch (InterruptedException e) {e.printStackTrace();}
         System.out.println("Finish");
     }
 }
+

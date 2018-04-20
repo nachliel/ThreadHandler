@@ -1,16 +1,13 @@
 package com.company;
 
-import java.util.LinkedList;
 import java.util.Queue;
 
-
 class Slave extends Thread {
+    private Task task;
     private Object lock = new Object();
     private Object lockTask = new Object();
-    private int taskNumber = 0;
-
     private volatile boolean holdMe = true;
-    private Queue<Task> taskQueue = new LinkedList<>();
+
 
     public Slave() {
         setName("Slave");
@@ -19,12 +16,12 @@ class Slave extends Thread {
     public void run() {
         synchronized (lock) {
             while (holdMe) {
-                if (taskQueue.isEmpty())
+                if (task == null)
                     try {lock.wait();} catch (InterruptedException e) { e.printStackTrace();}
                 else {
                     synchronized (lockTask) {
-                        System.out.println("Task: " + ++taskNumber + "/" + countTasks());
-                        taskQueue.remove().execute();
+                        task.execute();
+                        task = null;
                         lockTask.notify();
                     }
                 }
@@ -33,9 +30,9 @@ class Slave extends Thread {
     }
 
     public boolean setTask(Task newTask) {
-        if (taskQueue.isEmpty()) {
+        if (task==null) {
             synchronized (lock) {
-                taskQueue.add(newTask);
+                task = newTask;
                 lock.notify();
                 return true;
             }
@@ -50,34 +47,17 @@ class Slave extends Thread {
         return false;
     }
 
-    public boolean addTask(Task newTask) {
-
-        synchronized (lock) {
-            taskQueue.add(newTask);
-            lock.notify();
-            return true;
-        }
-    }
-
     public boolean terminate() {
-        if (taskQueue.isEmpty()) {
-            synchronized (lock) {
-                holdMe = false;
-                lock.notify();
-            }
-            return true;
-        } else {
-            synchronized (lockTask) {
-                try {
-                    lockTask.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+        do {
+            if (task == null) {
+                synchronized (lock) {
+                    holdMe = false;
+                    lock.notify();
                 }
-                return terminate();
-            }
+                return true;
+            } else
+                try {sleep(500); } catch (InterruptedException e) {e.printStackTrace();}
         }
-    }
-    public int countTasks() {
-        return taskQueue.size();
+        while(true);
     }
 }
